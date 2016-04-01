@@ -1,0 +1,255 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>Knoah</title>
+        <link rel="stylesheet" href="https://getbootstrap.com/2.3.2/assets/css/bootstrap.css"/>
+    </head>
+    <style>
+        .help-block
+        {
+            color: #a94442;
+        }
+        .has-error {
+            border-color: #a94442 !important;
+            -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075) !important;
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075) !important;
+        }
+    </style>
+    <body>
+
+        <div style="margin: 100px;">
+            <form id="knoahForm">
+                <table class="table table-striped table-bordered displayTable">
+                    <thead>
+                        <tr>
+                            <th>List</th>
+                            <th>Target</th>
+                            <th>Value</th>
+                            <th style="width:20%">Add/Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!--                    <tr>
+                                                <td>
+                                                    <select class="fieldsList form-control" name="fieldsList">
+                        
+                                                    </select> 
+                                                </td> 
+                                                <td>
+                                                    <input type="number" value="" class="checkValue">  
+                                                </td>
+                                                <td>
+                                                    <input type="button" value="Add" class="addButton">
+                                                    <input type="button" value="Delete" class="deleteButton">
+                                                </td>
+                                            </tr>-->
+                    </tbody>
+                </table>
+            </form>
+        </div>
+
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.15.0/jquery.validate.js"></script>
+        <!-- our code -->
+        <script type="text/javascript">
+
+            $(document).ready(function () {
+
+                var listArray = ['EV', 'Audits', 'Accuracy', 'EHT', 'EHT Ratio', 'Invalids'];
+                var existElementsArray = [];
+                var count = 0;
+
+//                To Load Default DropDown List
+                loadDefaultDropDown();
+
+                function loadDefaultDropDown()
+                {
+
+                    str = '<tr>' +
+                            '<td>' +
+                            '<select id="fieldsList_' + count + '" class="fieldsList form-control" name="fieldsList">' +
+                            '<option value="">Pick One</option>';
+                    for (var i = 0; i < listArray.length; i++) {
+                        if (existElementsArray.indexOf(listArray[i]) === -1)
+                        {
+                            str += '<option value="' + listArray[i] + '">' + listArray[i] + '</option>';
+                        }
+                        else
+                        {
+                            str += '<option class="hide" value="' + listArray[i] + '">' + listArray[i] + '</option>';
+                        }
+
+                    }
+                    str += '</select>' +
+                            '</td>' +
+                            '<td>' +
+                            '<input type="number" id="target_' + count + '" name="target" value="" min="0" max="100" step="any" class="checkTarget form-control" placeholder="Enter Target">' +
+                            '</td>' +
+                            '<td>' +
+                            '<input type="number" id="value_' + count + '" name="value" value="" min="0" max="100" step="any" class="checkValue form-control" placeholder="Enter Value">' +
+                            '</td>' +
+                            '<td>' +
+                            '<input type="button" value="Add" class="addButton">' +
+                            '<input type="button" value="Delete" class="deleteButton">' +
+                            '</td>' +
+                            '</tr>';
+
+                    $(".displayTable tbody").append(str);
+
+                    count++;
+
+                    var rowCount = $('.displayTable > tbody > tr').length;
+
+                    if (rowCount == 1)
+                    {
+                        $(".displayTable tbody tr:first .deleteButton").addClass('hide');
+                    }
+
+                }
+//                Click on Add Button
+                $(document).on("click", ".addButton", function () {
+                    var selectedValue = $(this).closest("tr").find(".fieldsList option:selected").val();
+                    var isValidForm = filterViewRowFormValidation("#knoahForm");
+                    if (isValidForm && checkTotalPercentage())
+                    {
+                        var validationFlag = $('input[name="target"]').valid();
+                        var validationFlag1 = $('input[name="value"]').valid();
+                        if (validationFlag && validationFlag1)
+                        {
+                            existElementsArray.push(selectedValue);
+                            $(this).closest("tr").find(".fieldsList").prop("disabled", "disabled");
+
+                            $(this).closest("tr").find('.addButton').addClass('hide');
+                            $(this).closest("tr").find('.deleteButton').removeClass('hide');
+
+                            loadDefaultDropDown();
+                        }
+
+                    }
+
+                });
+
+//                Click in Delete Button
+                $(document).on("click", ".deleteButton", function () {
+                    var selectedValue = $(this).closest("tr").find(".fieldsList option:selected").val();
+
+                    existElementsArray = jQuery.grep(existElementsArray, function (value) {
+                        return value !== selectedValue;
+                    });
+                    $(this).closest("tr").remove();
+                    showOrHideListValues();
+
+                    var rowCount = $('.displayTable > tbody > tr').length;
+
+                    if (rowCount != 1)
+                    {
+
+                        $(".displayTable > tbody > tr:last").find('.addButton').removeClass('hide');
+                    }
+                    else {
+                        $(".displayTable > tbody > tr:last").find(".fieldsList").attr("disabled", false);
+                        $(".displayTable > tbody > tr:last").find('.addButton').removeClass('hide');
+                        $(".displayTable > tbody > tr:last").find('.deleteButton').addClass('hide');
+                    }
+                });
+
+//
+//                $(document).on("blur", ".checkValue", function () {
+//
+//                    var val = $(this).val();
+//                    if (val > 100)
+//                    {
+//                        alert("The Percentage should be 100 or Lessthan 100");
+//                    }
+//                    else
+//                    {
+//                        checkTotalPercentage();
+//                    }
+//
+//
+//                });
+
+                function checkTotalPercentage()
+                {
+                    var totalPercentage = 0;
+                    $(".displayTable tr").find("input.checkValue").filter(function () {
+                        totalPercentage += parseInt($(this).val());
+                    });
+
+                    if (totalPercentage > 100)
+                    {
+                        alert("The Total Percentage should be 100 or Lessthan 100");
+                        return false;
+                    }
+                    return true;
+                }
+
+//
+//                $(document).on("blur", ".checkTarget", function () {
+//
+//                    var val = $(this).val();
+//                    if (val > 100)
+//                    {
+//                        alert("The Percentage should be 100 or Lessthan 100");
+//                    }
+//
+//                });
+
+
+
+
+
+                function showOrHideListValues()
+                {
+                    $(".displayTable tr:last").find("select.fieldsList  option").filter(function () {
+                        if (existElementsArray.indexOf($(this).val()) === -1)
+                        {
+                            $(this).show();
+                        }
+                    });
+                }
+
+
+                // Validate the Fileds when Click on Add New Filter
+                function filterViewRowFormValidation(elemID) {
+
+                    $(elemID).validate({
+                        ignore: "",
+                        rules: {
+                            fieldsList: {required: true},
+                            target: {required: true, maxlength: 100, min: 0, max: 100, },
+                            value: {required: true, maxlength: 100, min: 0, max: 100},
+                        },
+                        messages: {
+                            fieldsList: {required: "Please Select an item"},
+                            target: {required: "Enter a Value",
+                                // maxlength: "This field cannot exceed 100 characters")
+                            },
+                            value: {required: "Enter a Value"
+//                                maxlength: "validation_message_can_not_exceed_100_characters", "This field cannot exceed 100 characters")},
+                            }},
+                        highlight: function (element) {
+                            $(element).addClass('has-error');
+                        },
+                        unhighlight: function (element) {
+                            $(element).removeClass('has-error');
+                        },
+                        errorElement: 'span',
+                        errorClass: 'help-block',
+                    });
+                    return $(elemID).valid();
+                }
+
+
+
+
+            });
+
+        </script>
+
+
+
+    </body>
+</html>
